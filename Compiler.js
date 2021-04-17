@@ -24,13 +24,13 @@ class Compiler {
     this.modules = new Set();
     // 所有的chunks
     this.chunks = new Set();
-    //  ? 存放着本次要产出的文件
-    this.assets = new Set();
+    //  存放着本次要产出的文件, key是文件名,不包含路径，值是文件内容
+    this.assets = {};
     // 本次编译后，要产出的文件的文件名
     this.files = new Set();
   }
   //开始执行webpack的编译工作
-  run() {
+  run(callback) {
     this.hooks.run.call();
     //  * 5. 根据配置中的entry找出入口文件
     let entry = {};
@@ -47,8 +47,44 @@ class Compiler {
       const entryModule = this.buildModule(entryName, entryPath);
       this.entries.add(entryModule);
     }
-    console.log("this.entries:", this.entries);
-    console.log("this.modules:", this.modules);
+    // console.log("this.entries:", this.entries);
+    // console.log("this.modules:", this.modules);
+
+    // * 8. 根据入口和模块之间的依赖关系，组装成一个个包含多个模块的 Chunk
+    // 一个entry对应一个chunk
+    for (const entryModule of this.entries) {
+      const chunk = {
+        name: entryModule.name,
+        entryModule,
+        modules: Array.from(this.modules).filter((module) => module.name === entryModule.name),
+      };
+      this.chunks.add(chunk);
+    }
+    // console.log("this.chunks:", this.chunks);
+
+    // * 9. 再把每个Chunk转换成一个单独的文件加入到输出列表
+    const output = this.options.output;
+    this.chunks.forEach((chunk) => {
+      const filename = output.filename.replace("[name]", chunk.name);
+      this.assets[filename] = getSource(chunk);
+    });
+    for (const filename in this.assets) {
+      const filePath = path.join(output.path, filename);
+      fs.writeFileSync(filePath, this.assets[filename]);
+    }
+    // 完成所有的编译工作，可以触发done的回调
+    this.hooks.done.call();
+    callback(null, {
+      toJson: () => {
+        return {
+          entries: this.entries,
+          modules: this.modules,
+          chunks: this.chunks,
+          assets: this.assets,
+          files: this.files,
+        };
+      },
+    });
   }
 
   buildModule(moduleName, modulePath) {
@@ -77,9 +113,9 @@ class Compiler {
     // 构建当前模块, 所有的模块id都是一个相对根目录的 相对路径
     let moduleId = "./" + path.posix.relative(rootPath, modulePath);
     const module = {
-      id: moduleId,
-      dependencies: [],
-      name: moduleName,
+      id: moduleId, //该模块独一无二的id属性
+      dependencies: [], // 该模块依赖的模块
+      name: moduleName, // 该模块所属的entryModule的name属性，会一直传递向下传递
     };
     // * 7. 再找出该模块依赖的模块，再递归本步骤直到所有入口依赖的文件都经过了本步骤的处理
     // 使用ast去分析依赖
@@ -137,6 +173,47 @@ function tryExtensions(modulePath, extensions, originModulePath, dirName) {
   // 说明没有后缀匹配
   // const err = `Module not found: Error: cannot resolve ${originModulePath} in ${dirName}`;
   throw new Error(`Module not found: Error: cannot resolve ${originModulePath} in ${dirName}`);
+}
+
+/**
+ * 获取chunk对应的源代码 输出的文件内容
+ * @param {*} chunk
+ *    name 代码块的名字 entryModule入口模块 modules所有的模块
+ */
+function getSource(chunk) {
+  return `
+  (() => {
+      var modules = ({
+         ${chunk.modules
+           .map(
+             (module) => `
+             "${module.id}":
+              ((module) => {
+                        ${module._source}
+              })
+             `
+           )
+           .join(",")} 
+      });
+      var cache = {};
+      function require(moduleId) {
+        var cachedModule = cache[moduleId];
+        if (cachedModule !== undefined) {
+          return cachedModule.exports;
+        }
+        var module = cache[moduleId] = {
+          exports: {}
+        };
+        modules[moduleId](module, module.exports, require);
+        return module.exports;
+      }
+      var exports = {};
+      (() => {
+              ${chunk.entryModule._source}
+      })();
+    })()
+      ;
+  `;
 }
 
 module.exports = Compiler;

@@ -8,10 +8,8 @@ module.exports = {
     entry2: "./src/entry2.js",
   },
   output: {
-    path: path.join(__dirname, "dist"),
-    publicPath: "/dist/",
+    path: path.resolve(__dirname, "dist"),
     filename: "[name].bundle.js",
-    chunkFilename: "[name].js",
   },
   module: {
     rules: [
