@@ -3,11 +3,14 @@ const DonePlugin = require("./plugins/DonePlugin");
 const RunPlugin = require("./plugins/RunPlugin");
 module.exports = {
   mode: "development",
-  entry: path.join(__dirname, "src", "index"),
+  entry: {
+    main: "./src/index.js",
+    // entry2: "./src/title.js",
+  },
   output: {
     path: path.join(__dirname, "dist"),
     publicPath: "/dist/",
-    filename: "bundle.js",
+    filename: "[name].bundle.js",
     chunkFilename: "[name].js",
   },
   module: {
@@ -17,27 +20,14 @@ module.exports = {
         include: [path.resolve(__dirname, "app")],
         exclude: [path.resolve(__dirname, "node_modules")],
         use: [
-          {
-            loader: "babel-loader",
-            options: {
-              presets: [
-                [
-                  "@babel/env",
-                  {
-                    targets: {
-                      browsers: "last 2 chrome versions",
-                    },
-                  },
-                ],
-              ],
-            },
-          },
+          path.resolve(__dirname, "loaders", "logger1-loader.js"),
+          path.resolve(__dirname, "loaders", "logger2-loader.js"),
         ],
       },
     ],
   },
   resolve: {
-    extensions: [".json", ".js", ".jsx"],
+    extensions: [".js", ".jsx", ".json"],
   },
   plugins: [new RunPlugin(), new DonePlugin()],
   devtool: false,

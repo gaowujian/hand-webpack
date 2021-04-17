@@ -1,6 +1,10 @@
 class RunPlugin {
   apply(compiler) {
-    console.log("run plugin");
+    // 注册一个run钩子
+    compiler.hooks.run.tap("runPlugin", () => {
+      // 执行回调
+      console.log("run plugin 回调函数");
+    });
   }
 }
 

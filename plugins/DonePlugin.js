@@ -1,6 +1,9 @@
 class DonePlugin {
   apply(compiler) {
-    console.log("done plugin");
+    // 注册一个run钩子
+    compiler.hooks.done.tap("donePlugin", () => {
+      console.log("done plugin");
+    });
   }
 }
 
