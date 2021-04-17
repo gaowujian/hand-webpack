@@ -1,1 +1,3 @@
-console.log("entry2222");
+const title = require("./title");
+
+console.log("title:", title);

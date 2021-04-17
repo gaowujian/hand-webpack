@@ -4,8 +4,8 @@ const RunPlugin = require("./plugins/RunPlugin");
 module.exports = {
   mode: "development",
   entry: {
-    main: "./src/index.js",
-    // entry2: "./src/title.js",
+    entry1: "./src/entry1.js",
+    entry2: "./src/entry2.js",
   },
   output: {
     path: path.join(__dirname, "dist"),

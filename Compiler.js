@@ -47,6 +47,8 @@ class Compiler {
       const entryModule = this.buildModule(entryName, entryPath);
       this.entries.add(entryModule);
     }
+    console.log("this.entries:", this.entries);
+    console.log("this.modules:", this.modules);
   }
 
   buildModule(moduleName, modulePath) {
@@ -95,7 +97,11 @@ class Compiler {
           depModulePath = tryExtensions(depModulePath, extensions, moduleName, dirName);
           let depModuleId = "./" + path.posix.relative(rootPath, depModulePath); //./src/title.js
           node.arguments = [types.stringLiteral(depModuleId)]; // 把模块的依赖名改成了在modules中注册的moduleId
-          module.dependencies.push(depModulePath); //给当前模块添加依赖
+          // !避免两个entry引入同一个title导致创建了两个title module
+          const alreadyModulesIds = Array.from(this.modules).map((module) => module.id);
+          if (!alreadyModulesIds.includes(depModuleId)) {
+            module.dependencies.push(depModulePath); //给当前模块添加依赖
+          }
         }
       },
     });
