@@ -6,7 +6,6 @@ const parser = require("@babel/core");
 const traverse = require("@babel/traverse").default;
 const generator = require("@babel/generator").default;
 const types = require("babel-types");
-const { DllPlugin } = require("webpack");
 
 const rootPath = process.cwd();
 class Compiler {
@@ -27,7 +26,7 @@ class Compiler {
     //  存放着本次要产出的文件, key是文件名,不包含路径，值是文件内容
     this.assets = {};
     // 本次编译后，要产出的文件的文件名
-    this.files = new Set();
+    this.files = [];
   }
   //开始执行webpack的编译工作
   run(callback) {
@@ -68,6 +67,9 @@ class Compiler {
       const filename = output.filename.replace("[name]", chunk.name);
       this.assets[filename] = getSource(chunk);
     });
+    // 输出文件前触发该事件
+    this.hooks.emit.call();
+    this.files = Object.keys(this.assets);
     for (const filename in this.assets) {
       const filePath = path.join(output.path, filename);
       fs.writeFileSync(filePath, this.assets[filename]);

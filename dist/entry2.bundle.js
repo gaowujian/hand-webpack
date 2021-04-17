@@ -1,7 +1,12 @@
 
   (() => {
       var modules = ({
-          
+         
+             "./src/title.js":
+              ((module) => {
+                        module.exports = "title"; //logger222//logger1111
+              })
+              
       });
       var cache = {};
       function require(moduleId) {

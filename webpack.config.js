@@ -1,11 +1,12 @@
 const path = require("path");
 const DonePlugin = require("./plugins/DonePlugin");
 const RunPlugin = require("./plugins/RunPlugin");
+const EmitPlugin = require("./plugins/EmitPlugin");
 module.exports = {
   mode: "development",
   entry: {
-    entry1: "./src/entry1.js",
     entry2: "./src/entry2.js",
+    entry1: "./src/entry1.js",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -27,6 +28,6 @@ module.exports = {
   resolve: {
     extensions: [".js", ".jsx", ".json"],
   },
-  plugins: [new RunPlugin(), new DonePlugin()],
+  plugins: [new RunPlugin(), new DonePlugin(), new EmitPlugin()],
   devtool: false,
 };
